@@ -23,8 +23,12 @@ def image_statistics(data):
     return [mean, variance, skewness, kurtosis]
 
 def extract_features(filename, batches=3):
+    m = re.search(r'(.*)\/\((.*?)\)[\d]+\.[a-zA-Z]{3}', filename)
+    if not m:
+        print(filename)
+    label = m.group(2)
+    return label
     image = scipy.misc.imread(filename, flatten=True)
-    label = re.search(r'(.*)\/\((.*?)\)[\d]+\.jpg', filename).group(2)
 
     w = int(image.shape[0] / 512)
     h = int(image.shape[1] / 512)
