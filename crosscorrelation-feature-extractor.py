@@ -55,11 +55,12 @@ if __name__ == '__main__':
         folder = os.path.join(train_dir, d)
         
         # single test
-        # frame = extract_features(os.path.join(folder, os.listdir(folder)[0]))
+        frame = extract_features(os.path.join(folder, os.listdir(folder)[0]))
 
-        pool = mp.Pool(pool_size)
-        metadata = pool.map(extract_features, [os.path.join(folder, f) for f in os.listdir(folder)])
-        results.extend(metadata)
+        # paralel test
+        # pool = mp.Pool(pool_size)
+        # metadata = pool.map(extract_features, [os.path.join(folder, f) for f in os.listdir(folder)])
+        # results.extend(metadata)
 
     df = pd.concat(results, ignore_index=True)
     df.to_csv('data/train-crosscorrelation-features.csv', index=False)
