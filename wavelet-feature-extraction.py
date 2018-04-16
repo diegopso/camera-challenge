@@ -22,35 +22,54 @@ def image_statistics(data):
     kurtosis = scipy.stats.kurtosis(flat)
     return [mean, variance, skewness, kurtosis]
 
-def extract_features(filename, batches=3):
+def extract_features(filename):
     label = re.search(r'(.*)\/\((.*?)\)[\d]+\.[a-zA-Z]{3}', filename).group(2)
-    image = scipy.misc.imread(filename, flatten=True)
+    image = scipy.misc.imread(filename)
 
-    w = int(image.shape[0] / 512)
-    h = int(image.shape[1] / 512)
+    w = image.shape[0]
+    h = image.shape[1]
+
+    pad1 = int((w - 512) / 2)
+    pad2 = int((h - 512) / 2)
+
+    batches = [
+        [(0,0),(512,512)], #1
+        [(w-512,0),(w, 512)], #2
+        [(0,h-512),(512, h)], #3
+        [(w-512,h-512),(w, h)], #4
+        [(pad1, pad2),(pad1+512, pad2+512)] #5
+        ]
 
     metadata = []
-    for k in range(0, batches):
-        i = random.randint(0, w-1)
-        j = random.randint(0, h-1)
+    batch_index = 0
+    for b in batches:
+        batch_index = batch_index + 1
+        for channel in range(0, 3):
+            sample_image = image[b[0][0]:b[1][0],b[0][1]:b[1][1],channel]
 
-        sample_image = image[i*512:(i+1)*512,j*512:(j+1)*512]
+            wavelet = pywt.Wavelet('db1')
+            # (cA, cD) = pywt.dwt(sample_image, wavelet)
+            (cA, (cH, cV, cD)) = pywt.dwt2(sample_image, wavelet)
 
-        wavelet = pywt.Wavelet('haar')
-        (cA, (cH, cV, cD)) = pywt.dwt2(sample_image, wavelet)
+            # scipy.misc.imsave('data/sample_image.png', sample_image)
+            # scipy.misc.imsave('data/cA.png', cH)
 
-        m = [label]
-        m.extend(image_statistics(sample_image))
-        m.extend(image_statistics(cH))
-        m.extend(image_statistics(cV))
-        m.extend(image_statistics(cD))
+            # cH = sample_image - cH
+            # cV = sample_image - cV
+            # cD = sample_image - cD
 
-        metadata.append(m)
+            m = [filename,label,channel,batch_index]
+            # m.extend(image_statistics(sample_image))
+            m.extend(image_statistics(cH))
+            m.extend(image_statistics(cV))
+            m.extend(image_statistics(cD))
+
+            metadata.append(m)
 
     df = pd.DataFrame(metadata)
     df.columns = [
-        'label', 
-        'original_mean', 'original_variance', 'original_skewness', 'original_kurtosis',
+        'filename', 'label', 'channel', 'batch',
+        # 'original_mean', 'original_variance', 'original_skewness', 'original_kurtosis',
         'wavelet_h_mean', 'wavelet_h_variance', 'wavelet_h_skewness', 'wavelet_h_kurtosis',
         'wavelet_v_mean', 'wavelet_v_variance', 'wavelet_v_skewness', 'wavelet_v_kurtosis',
         'wavelet_d_mean', 'wavelet_d_variance', 'wavelet_d_skewness', 'wavelet_d_kurtosis',
@@ -63,7 +82,14 @@ if __name__ == '__main__':
     pool_size = 3
     results = []
     for d in os.listdir(train_dir):
-        folder = os.path.join(train_dir, d)
+        #single test
+        # folder = os.path.join(train_dir, d)
+        # f = os.listdir(folder)[0]
+        # df = extract_features(os.path.join(folder, f))
+        # print(df)
+        # sys.exit()
+
+        # paralel test
         pool = mp.Pool(pool_size)
         metadata = pool.map(extract_features, [os.path.join(folder, f) for f in os.listdir(folder)])
         results.extend(metadata)
