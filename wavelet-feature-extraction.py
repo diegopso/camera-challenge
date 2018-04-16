@@ -82,8 +82,9 @@ if __name__ == '__main__':
     pool_size = 3
     results = []
     for d in os.listdir(train_dir):
+        folder = os.path.join(train_dir, d)
+        
         #single test
-        # folder = os.path.join(train_dir, d)
         # f = os.listdir(folder)[0]
         # df = extract_features(os.path.join(folder, f))
         # print(df)
