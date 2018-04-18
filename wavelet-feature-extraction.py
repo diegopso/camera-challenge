@@ -49,17 +49,18 @@ def extract_features(filename):
 
             wavelet = pywt.Wavelet('db1')
             # (cA, cD) = pywt.dwt(sample_image, wavelet)
-            (cA, (cH, cV, cD)) = pywt.dwt2(sample_image, wavelet)
+            # (cA, (cH, cV, cD)) = pywt.dwt2(sample_image, wavelet)
+            c = pywt.dwt2(sample_image, wavelet)
+            # cA = pywt.wavedec(sample_image, wavelet)
 
-            # scipy.misc.imsave('data/sample_image.png', sample_image)
-            # scipy.misc.imsave('data/cA.png', cH)
+            c[0][:] = 0
+            noise = pywt.idwt2(c, wavelet)
 
-            # cH = sample_image - cH
-            # cV = sample_image - cV
-            # cD = sample_image - cD
+            # scipy.misc.imsave('data/m.png', m)
+            # sys.exit()
 
             m = [filename,label,channel,batch_index]
-            # m.extend(image_statistics(sample_image))
+            m.extend(image_statistics(noise))
             m.extend(image_statistics(cH))
             m.extend(image_statistics(cV))
             m.extend(image_statistics(cD))
@@ -69,7 +70,7 @@ def extract_features(filename):
     df = pd.DataFrame(metadata)
     df.columns = [
         'filename', 'label', 'channel', 'batch',
-        # 'original_mean', 'original_variance', 'original_skewness', 'original_kurtosis',
+        'noise_mean', 'noise_variance', 'noise_skewness', 'noise_kurtosis',
         'wavelet_h_mean', 'wavelet_h_variance', 'wavelet_h_skewness', 'wavelet_h_kurtosis',
         'wavelet_v_mean', 'wavelet_v_variance', 'wavelet_v_skewness', 'wavelet_v_kurtosis',
         'wavelet_d_mean', 'wavelet_d_variance', 'wavelet_d_skewness', 'wavelet_d_kurtosis',
@@ -85,15 +86,15 @@ if __name__ == '__main__':
         folder = os.path.join(train_dir, d)
         
         #single test
-        # f = os.listdir(folder)[0]
-        # df = extract_features(os.path.join(folder, f))
-        # print(df)
-        # sys.exit()
+        f = os.listdir(folder)[0]
+        df = extract_features(os.path.join(folder, f))
+        print(df)
+        sys.exit()
 
         # paralel test
-        pool = mp.Pool(pool_size)
-        metadata = pool.map(extract_features, [os.path.join(folder, f) for f in os.listdir(folder)])
-        results.extend(metadata)
+        # pool = mp.Pool(pool_size)
+        # metadata = pool.map(extract_features, [os.path.join(folder, f) for f in os.listdir(folder)])
+        # results.extend(metadata)
 
     df = pd.concat(results, ignore_index=True)
     df.to_csv('data/train-wavelet-features.csv', index=False)
