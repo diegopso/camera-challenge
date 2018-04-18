@@ -50,8 +50,9 @@ def extract_features(filename):
             wavelet = pywt.Wavelet('db1')
             # (cA, cD) = pywt.dwt(sample_image, wavelet)
             # (cA, (cH, cV, cD)) = pywt.dwt2(sample_image, wavelet)
-            c = pywt.dwt2(sample_image, wavelet)
             # cA = pywt.wavedec(sample_image, wavelet)
+            c = pywt.dwt2(sample_image, wavelet)
+            (cA, (cH, cV, cD)) = c
 
             c[0][:] = 0
             noise = pywt.idwt2(c, wavelet)
@@ -80,21 +81,21 @@ def extract_features(filename):
 
 if __name__ == '__main__':
     train_dir = 'data/train/'
-    pool_size = 3
+    pool_size = 12
     results = []
     for d in os.listdir(train_dir):
         folder = os.path.join(train_dir, d)
         
-        #single test
-        f = os.listdir(folder)[0]
-        df = extract_features(os.path.join(folder, f))
-        print(df)
-        sys.exit()
+        # single test
+        # f = os.listdir(folder)[0]
+        # df = extract_features(os.path.join(folder, f))
+        # print(df)
+        # sys.exit()
 
         # paralel test
-        # pool = mp.Pool(pool_size)
-        # metadata = pool.map(extract_features, [os.path.join(folder, f) for f in os.listdir(folder)])
-        # results.extend(metadata)
+        pool = mp.Pool(pool_size)
+        metadata = pool.map(extract_features, [os.path.join(folder, f) for f in os.listdir(folder)])
+        results.extend(metadata)
 
     df = pd.concat(results, ignore_index=True)
     df.to_csv('data/train-wavelet-features.csv', index=False)
