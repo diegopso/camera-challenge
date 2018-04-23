@@ -50,6 +50,8 @@ def extract_features(filename):
     batch_index = 0
     for b in batches:
         batch_index = batch_index + 1
+        
+        m = [filename,label,batch_index]
         for channel in range(0, 3):
             sample_image = image[b[0][0]:b[1][0],b[0][1]:b[1][1],channel]
 
@@ -66,21 +68,28 @@ def extract_features(filename):
             # scipy.misc.imsave('data/m.png', m)
             # sys.exit()
 
-            m = [filename,label,channel,batch_index]
             m.extend(image_statistics(noise))
             m.extend(image_statistics(cH))
             m.extend(image_statistics(cV))
             m.extend(image_statistics(cD))
 
-            metadata.append(m)
+        metadata.append(m)
 
     df = pd.DataFrame(metadata)
     df.columns = [
-        'filename', 'label', 'channel', 'batch',
-        'noise_mean', 'noise_variance', 'noise_skewness', 'noise_kurtosis',
-        'wavelet_h_mean', 'wavelet_h_variance', 'wavelet_h_skewness', 'wavelet_h_kurtosis',
-        'wavelet_v_mean', 'wavelet_v_variance', 'wavelet_v_skewness', 'wavelet_v_kurtosis',
-        'wavelet_d_mean', 'wavelet_d_variance', 'wavelet_d_skewness', 'wavelet_d_kurtosis',
+        'filename', 'label', 'batch',
+        'noise_mean_r', 'noise_variance_r', 'noise_skewness_r', 'noise_kurtosis_r',
+        'wavelet_h_mean_r', 'wavelet_h_variance_r', 'wavelet_h_skewness_r', 'wavelet_h_kurtosis_r',
+        'wavelet_v_mean_r', 'wavelet_v_variance_r', 'wavelet_v_skewness_r', 'wavelet_v_kurtosis_r',
+        'wavelet_d_mean_r', 'wavelet_d_variance_r', 'wavelet_d_skewness_r', 'wavelet_d_kurtosis_r',
+        'noise_mean_g', 'noise_variance_g', 'noise_skewness_g', 'noise_kurtosis_g',
+        'wavelet_h_mean_g', 'wavelet_h_variance_g', 'wavelet_h_skewness_g', 'wavelet_h_kurtosis_g',
+        'wavelet_v_mean_g', 'wavelet_v_variance_g', 'wavelet_v_skewness_g', 'wavelet_v_kurtosis_g',
+        'wavelet_d_mean_g', 'wavelet_d_variance_g', 'wavelet_d_skewness_g', 'wavelet_d_kurtosis_g',
+        'noise_mean_b', 'noise_variance_b', 'noise_skewness_b', 'noise_kurtosis_b',
+        'wavelet_h_mean_b', 'wavelet_h_variance_b', 'wavelet_h_skewness_b', 'wavelet_h_kurtosis_b',
+        'wavelet_v_mean_b', 'wavelet_v_variance_b', 'wavelet_v_skewness_b', 'wavelet_v_kurtosis_b',
+        'wavelet_d_mean_b', 'wavelet_d_variance_b', 'wavelet_d_skewness_b', 'wavelet_d_kurtosis_b',
         ]
     
     return df
