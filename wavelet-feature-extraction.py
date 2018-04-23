@@ -23,22 +23,28 @@ def image_statistics(data):
     return [mean, variance, skewness, kurtosis]
 
 def extract_features(filename):
-    label = re.search(r'(.*)\/\((.*?)\)[\d]+\.[a-zA-Z]{3}', filename).group(2)
     image = scipy.misc.imread(filename)
-
+    label = re.search(r'(.*)\/\((.*?)\)[\d]+\.[a-zA-Z]{3}', filename)
+    if label:
+        label = label.group(2)
+    else:
+        label = 'unknown'
+    
     w = image.shape[0]
     h = image.shape[1]
 
-    pad1 = int((w - 512) / 2)
-    pad2 = int((h - 512) / 2)
-
-    batches = [
-        [(0,0),(512,512)], #1
-        [(w-512,0),(w, 512)], #2
-        [(0,h-512),(512, h)], #3
-        [(w-512,h-512),(w, h)], #4
-        [(pad1, pad2),(pad1+512, pad2+512)] #5
-        ]
+    if w == 512 and h == 512:
+        batches = [[(0, 0), (512, 512)]]
+    else:
+        pad1 = int((w - 512) / 2)
+        pad2 = int((h - 512) / 2)
+        batches = [
+            [(0, 0), (512, 512)], #1
+            [(w-512, 0), (w, 512)], #2
+            [(0, h-512), (512, h)], #3
+            [(w-512, h-512), (w, h)], #4
+            [(pad1, pad2), (pad1+512, pad2+512)] #5
+            ]
 
     metadata = []
     batch_index = 0
@@ -79,9 +85,8 @@ def extract_features(filename):
     
     return df
 
-if __name__ == '__main__':
+def train(pool_size=3):
     train_dir = 'data/train/'
-    pool_size = 12
     results = []
     for d in os.listdir(train_dir):
         folder = os.path.join(train_dir, d)
@@ -99,3 +104,22 @@ if __name__ == '__main__':
 
     df = pd.concat(results, ignore_index=True)
     df.to_csv('data/train-wavelet-features.csv', index=False)
+
+def test(pool_size=3):
+    folder = 'data/test/'
+    # single test
+    # f = os.listdir(folder)[0]
+    # df = extract_features(os.path.join(folder, f))
+    # print(df)
+    # sys.exit()
+
+    # paralel test
+    pool = mp.Pool(pool_size)
+    metadata = pool.map(extract_features, [os.path.join(folder, f) for f in os.listdir(folder)])
+    results.extend(metadata)
+
+    df = pd.concat(results, ignore_index=True)
+    df.to_csv('data/test-wavelet-features.csv', index=False)
+
+if __name__ == '__main__':
+    test(3)
